@@ -1,0 +1,374 @@
+from flask import Flask, render_template_string, request
+import requests
+
+app = Flask(__name__)
+
+HTML_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft Tierlist & Player Lookup</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { 
+            background: #070814; 
+            color: #ffffff; 
+            padding: 40px 20px;
+            background-image: 
+                radial-gradient(at 20% 20%, rgba(139, 92, 246, 0.15) 0px, transparent 50%),
+                radial-gradient(at 80% 80%, rgba(217, 70, 239, 0.12) 0px, transparent 50%),
+                radial-gradient(circle at 50% 0%, #17153b 0%, #070814 80%);
+            min-height: 100vh;
+        }
+        .container { max-width: 1050px; margin: 0 auto; }
+        
+        /* Header Decoration */
+        .header-section { text-align: center; margin-bottom: 35px; }
+        .site-badge { display: inline-block; background: rgba(168, 85, 247, 0.12); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); padding: 5px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px; box-shadow: 0 0 15px rgba(168, 85, 247, 0.2); }
+        h1 { font-size: 40px; font-weight: 800; background: linear-gradient(135deg, #ffffff 30%, #c084fc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; letter-spacing: -0.5px; }
+        .subtitle { color: #94a3b8; font-size: 15px; }
+
+        /* Search Box Decor */
+        .search-box { 
+            display: flex; 
+            gap: 12px; 
+            margin-bottom: 25px; 
+            position: relative;
+            max-width: 650px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .input-wrapper { position: relative; flex: 1; display: flex; align-items: center; }
+        .search-icon { position: absolute; left: 18px; font-size: 18px; color: #a855f7; pointer-events: none; }
+        input[type="text"] { 
+            width: 100%;
+            padding: 16px 20px 16px 50px;
+            border-radius: 14px; 
+            border: 1px solid rgba(168, 85, 247, 0.35); 
+            background: rgba(19, 23, 46, 0.7); 
+            color: #ffffff; 
+            font-size: 16px; 
+            outline: none; 
+            backdrop-filter: blur(12px);
+            transition: all 0.3s ease-in-out;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+        input[type="text"]:focus { 
+            border-color: #a855f7;
+            background: rgba(19, 23, 46, 0.95);
+            box-shadow: 0 0 25px rgba(168, 85, 247, 0.45);
+        }
+        input[type="text"]::placeholder { color: #64748b; }
+        button { 
+            padding: 16px 32px; 
+            border-radius: 14px; 
+            border: none; 
+            background: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%); 
+            color: #ffffff; 
+            font-size: 15px; 
+            cursor: pointer; 
+            font-weight: 700; 
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease-in-out;
+            box-shadow: 0 4px 18px rgba(139, 92, 246, 0.4);
+        }
+        button:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(217, 70, 239, 0.6);
+        }
+
+        /* Quick Search Badges */
+        .quick-tags { display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 40px; flex-wrap: wrap; }
+        .tag-title { font-size: 12px; color: #64748b; font-weight: 600; text-transform: uppercase; }
+        .tag-btn { background: rgba(19, 23, 46, 0.8); border: 1px solid rgba(168, 85, 247, 0.25); color: #c084fc; padding: 6px 14px; border-radius: 20px; font-size: 12px; cursor: pointer; text-decoration: none; font-weight: 600; transition: all 0.25s; }
+        .tag-btn:hover { background: #8b5cf6; color: #fff; border-color: #8b5cf6; box-shadow: 0 0 12px rgba(139, 92, 246, 0.5); }
+
+        /* Decorated Card Layout */
+        .card-grid { display: grid; grid-template-columns: 1fr 1.6fr; gap: 24px; }
+        
+        .card { 
+            background: rgba(15, 18, 38, 0.65); 
+            border: 1px solid rgba(168, 85, 247, 0.2); 
+            backdrop-filter: blur(16px); 
+            border-radius: 20px; 
+            padding: 26px; 
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(168, 85, 247, 0.8), transparent);
+        }
+        
+        .skin-box { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .skin-img-wrapper {
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%);
+            padding: 20px;
+            border-radius: 50%;
+            transition: all 0.4s ease;
+        }
+        .skin-img-wrapper:hover {
+            transform: translateY(-6px) scale(1.03);
+            background: radial-gradient(circle, rgba(217, 70, 239, 0.25) 0%, transparent 70%);
+        }
+        .skin-img { width: 185px; height: auto; filter: drop-shadow(0px 15px 25px rgba(0,0,0,0.7)); }
+
+        .player-title {
+            margin-top: 15px; 
+            font-size: 24px; 
+            font-weight: 800; 
+            color: #ffffff;
+            letter-spacing: 0.5px;
+            background: linear-gradient(135deg, #fff 40%, #c084fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .tier-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 12px; }
+        .tier-section-title { font-size: 14px; color: #c084fc; text-transform: uppercase; font-weight: 800; letter-spacing: 0.8px; }
+        .api-badge { font-size: 10px; background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.4); padding: 4px 10px; border-radius: 20px; font-weight: bold; letter-spacing: 0.5px; }
+        
+        .tiers-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 24px; }
+        .tier-card { 
+            background: rgba(22, 27, 54, 0.7); 
+            padding: 12px 16px; 
+            border-radius: 12px; 
+            border: 1px solid rgba(255, 255, 255, 0.06); 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            transition: all 0.3s ease;
+        }
+        .tier-card:hover {
+            border-color: rgba(168, 85, 247, 0.4);
+            transform: translateX(2px);
+            background: rgba(28, 34, 68, 0.85);
+        }
+        .mode-name { font-size: 13px; font-weight: 600; color: #e2e8f0; }
+        .tier-badge { font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        /* Premium Badge Colors */
+        .ht1, .ht2, .ht3, .ht4, .ht5 { background: linear-gradient(135deg, #6b21a8, #581c87); color: #f0abfc; border: 1px solid #c084fc; box-shadow: 0 0 12px rgba(192, 132, 252, 0.35); }
+        .lt1, .lt2, .lt3, .lt4, .lt5 { background: linear-gradient(135deg, #1e3a8a, #172554); color: #93c5fd; border: 1px solid #60a5fa; box-shadow: 0 0 10px rgba(147, 197, 253, 0.2); }
+        .untested { background: rgba(30, 41, 59, 0.8); color: #64748b; border: 1px solid rgba(255, 255, 255, 0.08); }
+
+        .info-group { margin-bottom: 16px; }
+        .info-label { font-size: 11px; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px; font-weight: 700; letter-spacing: 0.5px; }
+        
+        .uuid-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(10, 12, 26, 0.6); 
+            padding: 10px 14px; 
+            border-radius: 10px; 
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            font-size: 13px; 
+            font-family: monospace;
+            color: #e2e8f0;
+        }
+        .copy-btn {
+            background: rgba(168, 85, 247, 0.2);
+            border: 1px solid rgba(168, 85, 247, 0.4);
+            color: #c084fc;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: bold;
+        }
+        .copy-btn:hover { background: #8b5cf6; color: #fff; }
+
+        .history-list { list-style: none; margin-top: 6px; max-height: 110px; overflow-y: auto; padding-right: 4px; }
+        .history-list::-webkit-scrollbar { width: 4px; }
+        .history-list::-webkit-scrollbar-thumb { background: rgba(168, 85, 247, 0.3); border-radius: 4px; }
+        .history-list li { background: rgba(22, 27, 54, 0.6); padding: 8px 12px; border-radius: 8px; margin-bottom: 6px; font-size: 13px; display: flex; justify-content: space-between; border: 1px solid rgba(255,255,255,0.04); }
+        
+        .history-link { font-size: 12px; color: #c084fc; text-decoration: none; margin-top: 8px; display: inline-block; font-weight: 700; transition: all 0.2s; }
+        .history-link:hover { color: #e879f9; text-decoration: underline; }
+        
+        /* Empty State Placeholder */
+        .empty-state { text-align: center; padding: 60px 20px; background: rgba(15, 18, 38, 0.4); border: 1px dashed rgba(168, 85, 247, 0.25); border-radius: 20px; margin-top: 20px; backdrop-filter: blur(10px); }
+        .empty-icon { font-size: 52px; margin-bottom: 15px; filter: drop-shadow(0 0 10px rgba(168,85,247,0.4)); }
+        .empty-title { font-size: 20px; font-weight: 700; color: #e2e8f0; margin-bottom: 6px; }
+        .empty-desc { font-size: 14px; color: #64748b; }
+
+        .error { color: #f87171; text-align: center; font-weight: bold; margin-bottom: 20px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); padding: 12px; border-radius: 10px; max-width: 650px; margin-left: auto; margin-right: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Site Branding Header -->
+        <div class="header-section">
+            <span class="site-badge">⚡ Live Combat Index</span>
+            <h1>Minecraft Tier Lookup</h1>
+            <p class="subtitle">Search official player combat rankings, UUIDs, and HD skin renders</p>
+        </div>
+        
+        <!-- Decorated Search Form -->
+        <form method="POST" class="search-box">
+            <div class="input-wrapper">
+                <span class="search-icon">🔍</span>
+                <input type="text" name="username" placeholder="Search Minecraft Player..." value="{{ username }}" required autocomplete="off">
+            </div>
+            <button type="submit">SEARCH</button>
+        </form>
+
+        <!-- Quick Tags -->
+        <div class="quick-tags">
+            <span class="tag-title">Quick Search:</span>
+            <form method="POST" style="display:inline;"><input type="hidden" name="username" value="ItzRealMe"><button class="tag-btn" type="submit">ItzRealMe</button></form>
+            <form method="POST" style="display:inline;"><input type="hidden" name="username" value="ClownPierce"><button class="tag-btn" type="submit">ClownPierce</button></form>
+            <form method="POST" style="display:inline;"><input type="hidden" name="username" value="Swight"><button class="tag-btn" type="submit">Swight</button></form>
+            <form method="POST" style="display:inline;"><input type="hidden" name="username" value="Marlowww"><button class="tag-btn" type="submit">Marlowww</button></form>
+        </div>
+
+        {% if error %}
+            <p class="error">❌ {{ error }}</p>
+        {% endif %}
+
+        {% if player_data %}
+        <div class="card-grid">
+            <!-- Left Skin Card -->
+            <div class="card skin-box">
+                <div class="skin-img-wrapper">
+                    <img class="skin-img" src="https://visage.surgeplay.com/full/384/{{ player_data.uuid }}" alt="Player Skin" onerror="this.src='https://mc-heads.net/body/{{ player_data.uuid }}';">
+                </div>
+                <h2 class="player-title">{{ player_data.name }}</h2>
+            </div>
+
+            <!-- Right Info & Tier Card -->
+            <div class="card">
+                <div class="tier-header">
+                    <span class="tier-section-title">⚔️ Live Combat Tiers</span>
+                    <span class="api-badge">● MCTIERS SYNCED</span>
+                </div>
+                
+                <div class="tiers-grid">
+                    {% for mode_key, mode_name in [('nethop', '🟣 Neth Pot'), ('smp', '💎 Dia SMP'), ('vanilla', '🔮 Crystal'), ('sword', '⚔️ Sword'), ('uhc', '🍎 UHC'), ('pot', '🛡️ Dia Pot')] %}
+                        {% set rank = player_data.tiers.get(mode_key, 'UNTESTED') %}
+                        <div class="tier-card">
+                            <span class="mode-name">{{ mode_name }}</span>
+                            <span class="tier-badge {{ rank[:3].lower() if rank != 'UNTESTED' else 'untested' }}">{{ rank }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="info-group">
+                    <div class="info-label">Player UUID</div>
+                    <div class="uuid-container">
+                        <span id="uuidText">{{ player_data.uuid }}</span>
+                        <button class="copy-btn" onclick="copyUUID()">Copy</button>
+                    </div>
+                </div>
+
+                <div class="info-group">
+                    <div class="info-label">Name History</div>
+                    <ul class="history-list">
+                        {% for name in player_data.name_history %}
+                            <li>
+                                <span>{{ name }}</span>
+                                <span style="color: #64748b; font-size: 11px; font-weight: 600;">{% if loop.first %}Current{% else %}Old{% endif %}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                    <a href="https://namemc.com/profile/{{ player_data.name }}" target="_blank" class="history-link">🔍 View Full Profile on NameMC ↗</a>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            function copyUUID() {
+                const uuid = document.getElementById('uuidText').innerText;
+                navigator.clipboard.writeText(uuid);
+                const btn = document.querySelector('.copy-btn');
+                btn.innerText = 'Copied!';
+                btn.style.background = '#22c55e';
+                btn.style.color = '#fff';
+                setTimeout(() => {
+                    btn.innerText = 'Copy';
+                    btn.style.background = 'rgba(168, 85, 247, 0.2)';
+                    btn.style.color = '#c084fc';
+                }, 2000);
+            }
+        </script>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">🛡️</div>
+            <div class="empty-title">No Player Selected</div>
+            <div class="empty-desc">Enter a Minecraft username above or click a quick tag to view live tiers and skin profile.</div>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
+"""
+
+def fetch_mctiers_data(uuid):
+    tiers = {"nethop": "UNTESTED", "smp": "UNTESTED", "vanilla": "UNTESTED", "sword": "UNTESTED", "uhc": "UNTESTED", "pot": "UNTESTED"}
+    try:
+        res = requests.get(f"https://mctiers.com/api/v2/profile/{uuid}", headers={'User-Agent': 'Mozilla/5.0'}, timeout=3)
+        if res.status_code == 200:
+            data = res.json()
+            rankings = data.get("rankings", {}) or data.get("tiers", {})
+            for mode, val in rankings.items():
+                clean_mode = mode.lower()
+                if clean_mode in tiers:
+                    if isinstance(val, dict):
+                        tier_num = val.get("tier", 0)
+                        pos = val.get("pos", 0)
+                        prefix = "HT" if pos == 0 else "LT"
+                        tiers[clean_mode] = f"{prefix}{tier_num}" if tier_num > 0 else "UNTESTED"
+                    elif isinstance(val, str):
+                        tiers[clean_mode] = val.upper()
+    except Exception:
+        pass
+    return tiers
+
+@app.route("/", methods=["GET", "POST"])
+def index():
+    player_data = None
+    error = None
+    username = ""
+
+    if request.method == "POST":
+        username = request.form.get("username").strip()
+        playerdb_res = requests.get(f"https://playerdb.co/api/player/minecraft/{username}")
+        
+        if playerdb_res.status_code == 200 and playerdb_res.json().get("success"):
+            data = playerdb_res.json()["data"]["player"]
+            uuid = data["id"]
+            official_name = data["username"]
+            player_tiers = fetch_mctiers_data(uuid)
+
+            name_history = [official_name]
+            try:
+                meta_res = requests.get(f"https://api.ashcon.app/mojang/v2/user/{official_name}")
+                if meta_res.status_code == 200:
+                    history_raw = meta_res.json().get("username_history", [])
+                    if history_raw:
+                        name_history = [item["username"] for item in reversed(history_raw)]
+            except Exception:
+                pass
+
+            player_data = {
+                "name": official_name,
+                "uuid": uuid,
+                "name_history": name_history,
+                "tiers": player_tiers
+            }
+        else:
+            error = "Player not found! Please check the username."
+
+    return render_template_string(HTML_TEMPLATE, player_data=player_data, error=error, username=username)
+
+if __name__ == "__main__":
+    app.run(debug=True)
