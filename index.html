@@ -18,13 +18,11 @@
         }
         .container { max-width: 1050px; margin: 0 auto; }
         
-        /* Header Decoration */
         .header-section { text-align: center; margin-bottom: 35px; }
         .site-badge { display: inline-block; background: rgba(168, 85, 247, 0.12); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); padding: 5px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px; box-shadow: 0 0 15px rgba(168, 85, 247, 0.2); }
         h1 { font-size: 40px; font-weight: 800; background: linear-gradient(135deg, #ffffff 30%, #c084fc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; letter-spacing: -0.5px; }
         .subtitle { color: #94a3b8; font-size: 15px; }
 
-        /* Search Box Decor */
         .search-box { 
             display: flex; 
             gap: 12px; 
@@ -73,13 +71,11 @@
             box-shadow: 0 6px 25px rgba(217, 70, 239, 0.6);
         }
 
-        /* Quick Search Badges */
         .quick-tags { display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 40px; flex-wrap: wrap; }
         .tag-title { font-size: 12px; color: #64748b; font-weight: 600; text-transform: uppercase; }
         .tag-btn { background: rgba(19, 23, 46, 0.8); border: 1px solid rgba(168, 85, 247, 0.25); color: #c084fc; padding: 6px 14px; border-radius: 20px; font-size: 12px; cursor: pointer; text-decoration: none; font-weight: 600; transition: all 0.25s; }
         .tag-btn:hover { background: #8b5cf6; color: #fff; border-color: #8b5cf6; box-shadow: 0 0 12px rgba(139, 92, 246, 0.5); }
 
-        /* Card Layout */
         .card-grid { display: grid; grid-template-columns: 1fr 1.6fr; gap: 24px; }
         
         .card { 
@@ -106,13 +102,8 @@
             background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%);
             padding: 20px;
             border-radius: 50%;
-            transition: all 0.4s ease;
         }
-        .skin-img-wrapper:hover {
-            transform: translateY(-6px) scale(1.03);
-            background: radial-gradient(circle, rgba(217, 70, 239, 0.25) 0%, transparent 70%);
-        }
-        .skin-img { width: 185px; height: auto; filter: drop-shadow(0px 15px 25px rgba(0,0,0,0.7)); }
+        .skin-img { width: 180px; height: auto; filter: drop-shadow(0px 15px 25px rgba(0,0,0,0.7)); }
 
         .player-title {
             margin-top: 15px; 
@@ -148,7 +139,6 @@
         .mode-name { font-size: 13px; font-weight: 600; color: #e2e8f0; }
         .tier-badge { font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
         
-        /* Tier Badge Styles */
         .ht1, .ht2, .ht3, .ht4, .ht5, .t1, .t2, .t3, .t4, .t5 { background: linear-gradient(135deg, #6b21a8, #581c87); color: #f0abfc; border: 1px solid #c084fc; box-shadow: 0 0 12px rgba(192, 132, 252, 0.35); }
         .lt1, .lt2, .lt3, .lt4, .lt5 { background: linear-gradient(135deg, #1e3a8a, #172554); color: #93c5fd; border: 1px solid #60a5fa; box-shadow: 0 0 10px rgba(147, 197, 253, 0.2); }
         .untested { background: rgba(30, 41, 59, 0.8); color: #64748b; border: 1px solid rgba(255, 255, 255, 0.08); }
@@ -189,7 +179,6 @@
         .history-link { font-size: 12px; color: #c084fc; text-decoration: none; margin-top: 8px; display: inline-block; font-weight: 700; transition: all 0.2s; }
         .history-link:hover { color: #e879f9; text-decoration: underline; }
         
-        /* Empty State Placeholder */
         .empty-state { text-align: center; padding: 60px 20px; background: rgba(15, 18, 38, 0.4); border: 1px dashed rgba(168, 85, 247, 0.25); border-radius: 20px; margin-top: 20px; backdrop-filter: blur(10px); }
         .empty-icon { font-size: 52px; margin-bottom: 15px; filter: drop-shadow(0 0 10px rgba(168,85,247,0.4)); }
         .empty-title { font-size: 20px; font-weight: 700; color: #e2e8f0; margin-bottom: 6px; }
@@ -201,14 +190,12 @@
 </head>
 <body>
     <div class="container">
-        <!-- Site Branding Header -->
         <div class="header-section">
             <span class="site-badge">⚡ Live Combat Index</span>
             <h1>Minecraft Tier Lookup</h1>
-            <p class="subtitle">Search official player combat rankings, UUIDs, and HD skin renders</p>
+            <p class="subtitle">Search official player combat rankings, UUIDs, and skin renders</p>
         </div>
         
-        <!-- Search Form -->
         <form id="searchForm" class="search-box" onsubmit="event.preventDefault(); handleSearch();">
             <div class="input-wrapper">
                 <span class="search-icon">🔍</span>
@@ -217,7 +204,6 @@
             <button type="submit" class="search-btn">SEARCH</button>
         </form>
 
-        <!-- Quick Tags -->
         <div class="quick-tags">
             <span class="tag-title">Quick Search:</span>
             <button class="tag-btn" onclick="quickSearch('ItzRealMe')">ItzRealMe</button>
@@ -229,18 +215,15 @@
         <div id="loading" class="loading">⏳ Searching player data...</div>
         <div id="errorMessage" class="error" style="display: none;"></div>
 
-        <!-- Result Container -->
         <div id="resultBox" style="display: none;">
             <div class="card-grid">
-                <!-- Left Skin Card -->
                 <div class="card skin-box">
                     <div class="skin-img-wrapper">
-                        <img id="skinImg" class="skin-img" src="" alt="Player Skin" onerror="this.src='https://mc-heads.net/body/' + currentUUID;">
+                        <img id="skinImg" class="skin-img" src="" alt="Player Skin">
                     </div>
                     <h2 id="playerName" class="player-title"></h2>
                 </div>
 
-                <!-- Right Info & Tier Card -->
                 <div class="card">
                     <div class="tier-header">
                         <span class="tier-section-title">⚔️ Live Combat Tiers</span>
@@ -266,7 +249,6 @@
             </div>
         </div>
 
-        <!-- Empty State Placeholder -->
         <div id="emptyState" class="empty-state">
             <div class="empty-icon">🛡️</div>
             <div class="empty-title">No Player Selected</div>
@@ -341,10 +323,8 @@
                     currentUUID = player.id;
                     const officialName = player.username;
 
-                    // Fetch Tiers
                     const tiers = await fetchMCTiersData(currentUUID);
 
-                    // Fetch Name History
                     let nameHistory = [officialName];
                     try {
                         const ashconRes = await fetch(`https://api.ashcon.app/mojang/v2/user/${officialName}`);
@@ -358,13 +338,13 @@
                         console.log("Ashcon API error:", e);
                     }
 
-                    // Render UI
                     document.getElementById('playerName').innerText = officialName;
                     document.getElementById('uuidText').innerText = currentUUID;
-                    document.getElementById('skinImg').src = `https://visage.surgeplay.com/full/384/${currentUUID}`;
+                    
+                    // Direct 2D Straight Render
+                    document.getElementById('skinImg').src = `https://mc-heads.net/body/${currentUUID}`;
                     document.getElementById('namemcLink').href = `https://namemc.com/profile/${officialName}`;
 
-                    // Render Tiers
                     const tiersGrid = document.getElementById('tiersGrid');
                     tiersGrid.innerHTML = '';
                     for (const [key, label] of Object.entries(modeLabels)) {
@@ -378,7 +358,6 @@
                         `;
                     }
 
-                    // Render History
                     const historyList = document.getElementById('historyList');
                     historyList.innerHTML = '';
                     nameHistory.forEach((name, index) => {
